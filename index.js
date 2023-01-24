@@ -13,7 +13,7 @@ const Schema = mongoose.Schema;
 
 const urlSchema = new Schema ({
   originalUrl: {type: String, required: true},
-  shortUrl: String
+  shortUrl: Number
 });
 
 // Basic Configuration
@@ -38,7 +38,7 @@ app.use(bp.json());
 app.post('/api/shorturl', (req, res) => {
   const urlOriginal = req.body.url;
   let urlPattern = /^https?:\/\/+/;
-  let hostName = urlOriginal.split("//")[1];
+  let hostName = urlOriginal.split("/")[2];
   if (urlPattern.test(urlOriginal) == false) {
       res.json({error: "Invalid Url"});
   } else {
@@ -47,8 +47,18 @@ app.post('/api/shorturl', (req, res) => {
       console.log(err);
       res.json({error: "Invalid Hostname"});
     } else {
+      //check whether address exist in db;
+
+      //if exists
+
+      //responds with information
       console.log(address);
       res.json({"original_url": urlOriginal, "short_url": "hold"});
+      //if not exist
+
+      //add to database
+
+      //responds with information
     };
   });
   };
