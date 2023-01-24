@@ -37,17 +37,22 @@ app.use(bp.json());
 
 app.post('/api/shorturl', (req, res) => {
   const urlOriginal = req.body.url;
-  dns.lookup(urlOriginal, dnsOptions, (err, address) => {
+  let urlPattern = /^https?:\/\/+/;
+  let hostName = urlOriginal.split("//")[1];
+  if (urlPattern.test(urlOriginal) == false) {
+      res.json({error: "Invalid Url"});
+  } else {
+  dns.lookup(hostName, dnsOptions, (err, address) => {
     if (err) { 
       console.log(err);
       res.json({error: "Invalid Hostname"});
     } else {
       console.log(address);
-      res.json({"original_url": urlOriginal, "short_url": "hold"})
-    }
-  })
-  
-})
+      res.json({"original_url": urlOriginal, "short_url": "hold"});
+    };
+  });
+  };
+});
 
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
