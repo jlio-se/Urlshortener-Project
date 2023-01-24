@@ -80,6 +80,19 @@ try {
   }  
 });
 
+app.get("/api/shorturl/:urlNum", (req, res) => {
+  const urlNum = req.params.urlNum;
+  Url.findOne({shortUrl: urlNum}, (err, urlFound) => {
+    if (err) {
+      console.log(err);
+    } if (!urlFound) {
+      res.json({error: "url not found"});
+    } else {
+      res.redirect(urlFound.originalUrl);
+    };
+  });
+});
+
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
 });
