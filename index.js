@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const mongoose = require('mongoose');
-let bp = require('body-parser');
+const bp = require('body-parser');
+const dns = require('dns');
+const dnsOptions = {all: true};
 
 mongoose.connect(process.env['MONGO_URI'], { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -35,7 +37,16 @@ app.use(bp.json());
 
 app.post('/api/shorturl', (req, res) => {
   const urlOriginal = req.body.url;
-  res.json({"original_url": urlOriginal, "short_url": "hold"})
+  dns.lookup(urlOriginal, dnsOptions, (err, address) => {
+    if (err) { 
+      console.log(err);
+      res.json({error: "Invalid Hostname"});
+    } else {
+      console.log(address);
+      res.json({"original_url": urlOriginal, "short_url": "hold"})
+    }
+  })
+  
 })
 
 app.listen(port, function() {
