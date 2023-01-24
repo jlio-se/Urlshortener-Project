@@ -3,18 +3,25 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const mongoose = require('mongoose');
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 const bp = require('body-parser');
 const dns = require('dns');
 const dnsOptions = {all: true};
 
-mongoose.connect(process.env['MONGO_URI'], { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(process.env['MONGO_URI'], { useNewUrlParser: true, useUnifiedTopology: true }).then(()=>{
+  console.log('database connected.')
+}).catch((err) => console.log(err.message));
 
 const Schema = mongoose.Schema;
 
 const urlSchema = new Schema ({
   originalUrl: {type: String, required: true},
-  shortUrl: Number
+  shortUrl: {type: Number}
 });
+
+urlSchema.plugin(AutoIncrement, {id: "urlId", inc_field: 'shortUrl'});
+
+const Url = mongoose.model("Url", urlSchema);
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -32,36 +39,45 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-app.use("/api/shorturl", bp.urlencoded({extended: true}));
+app.use("/api/shorturl", bp.urlencoded({extended: false}));
 app.use(bp.json());
 
-app.post('/api/shorturl', (req, res) => {
+app.post('/api/shorturl', async (req, res) => {
+try {
   const urlOriginal = req.body.url;
   let urlPattern = /^https?:\/\/+/;
   let hostName = urlOriginal.split("/")[2];
   if (urlPattern.test(urlOriginal) == false) {
       res.json({error: "Invalid Url"});
   } else {
-  dns.lookup(hostName, dnsOptions, (err, address) => {
-    if (err) { 
-      console.log(err);
-      res.json({error: "Invalid Hostname"});
-    } else {
-      //check whether address exist in db;
-
+    //check whether address exist in db;
+      const existingUrl = await Url.findOne({originalUrl: urlOriginal});
       //if exists
-
+      if (existingUrl) {
       //responds with information
-      console.log(address);
-      res.json({"original_url": urlOriginal, "short_url": "hold"});
-      //if not exist
+      res.json({"original_url": urlOriginal, "short_url": existingUrl.shortUrl});
+      } else {
+        dns.lookup(hostName, dnsOptions, (err, address) => {
+          if (err) { 
+           console.log(err);
+            res.json({error: "Invalid Hostname"});
+          } else {
+            let url = new Url (
+              {originalUrl: urlOriginal}
+            );
 
-      //add to database
-
-      //responds with information
-    };
-  });
-  };
+            url.save((err, saved) => {
+              if (err) {return console.log(err);} else {
+              res.json({"original_url": urlOriginal, "short_url": saved.shortUrl});
+                };
+            });
+          }
+        });
+      };
+    } 
+}  catch (err) {
+  console.log(err);
+  }  
 });
 
 app.listen(port, function() {
