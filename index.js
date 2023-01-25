@@ -55,7 +55,7 @@ try {
       //if exists
       if (existingUrl) {
       //responds with information
-      res.json({"original_url": urlOriginal, "short_url": existingUrl.shortUrl});
+     res.json({"original_url": urlOriginal, "short_url": existingUrl.shortUrl, "New url": `https://project-urlshortener.jlio-se.repl.co/api/shorturl/${existingUrl.shortUrl}`});
       } else {
         dns.lookup(hostName, dnsOptions, (err, address) => {
           if (err) { 
@@ -68,7 +68,7 @@ try {
 
             url.save((err, saved) => {
               if (err) {return console.log(err);} else {
-              res.json({"original_url": urlOriginal, "short_url": saved.shortUrl});
+              res.json({"original_url": urlOriginal, "short_url": saved.shortUrl, "New url": `https://project-urlshortener.jlio-se.repl.co/api/shorturl/${saved.shortUrl}`});
                 };
             });
           }
